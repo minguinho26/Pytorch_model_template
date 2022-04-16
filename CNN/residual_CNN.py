@@ -94,7 +94,7 @@ class small_Residual_CNN(nn.Module) :
             self.residual_CNN.add_module('Flatten', nn.Flatten())
     
     def set_residual_block(self, Residual_Block_size, kernal_size) :
-        if Residual_Block_size == 'big' :
+        if Residual_Block_size.lower() == 'big' :
             return residual_block_big(kernal_size)
         else :
             return residual_block_small(kernal_size)
