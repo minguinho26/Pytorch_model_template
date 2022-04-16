@@ -1,2 +1,8 @@
 # Pytorch_model_template
-model template made with PyTorch
+
+제작자 : 김민규 <br>
+리포지토리 생성일 : 22.4.16
+
+## 1. 설명
+파이토치를 이용해 제작한 네트워크(MLP, CNN 등)들을 쉽게 사용하기 위해 제작하는 템플릿. <br>
+시간이 날 때마다 만들어서 올리도록 하겠습니다. 
