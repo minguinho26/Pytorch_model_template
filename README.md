@@ -26,26 +26,40 @@
     # 일반적인 CNN을 사용하는 경우
     from CNN.normal_CNN import *
 
-    input_size : (3, 224, 224)
+    input_channel : 3 # 입력하는 값의 채널. 3채널 이미지의 경우 input_channel = 3입니다. 
     kernal_list : [64, 64, 'p', 128, 128] # p는 pooling을 나타냅니다. 
 
     # 기본적으로 연산 도중에 사용할 활성화 함수로 ReLU를 사용하고 연산의 마지막에 flatten 연산을 수행하지 않게 설정했습니다. 이 역시 초기화시 입력하는 값을 통해 수정할 수 있습니다. 그리고 Batch Normalization도 기본적으로 사용하게끔 설정되어 있으나 역시 수정 가능합니다. 
 
-    model = normal_CNN(input_size, kernal_list)
+    model = normal_CNN(input_channel, kernal_list)
     # 설정을 변경한 예
-    model = normal_CNN(input_size, kernal_list, activation_func = 'leaky_relu',  is_flatten = True, batch_normalization_use = False)
+    model = normal_CNN(input_channel, kernal_list, activation_func = 'leaky_relu',  is_flatten = True, batch_normalization_use = False)
     ~~~
 
     ~~~python
     # Residual CNN, 그러니까 ResNet 계열의 CNN을 사용하는 경우
     from CNN.residual_CNN import *
 
-    input_size : (3, 224, 224)
+    input_channel : 3
     kernal_list : [64, 64, 128, 128] # residual_CNN은 커널이 변경될 때마다 pooling을 수행합니다.  
 
     # ResNet 논문에 따르면 50층 이상의 큰 네트워크를 설계할 때는 3개의 Convolutional layer로 구성된 residual block을 쓰고 그보다 작은 네트워크를 설계할 때는 2개의 Convolutional layer로 구성된 residual block을 사용합니다. residual_CNN은 기본적으로 2게의 Convolutional layer로 구성된 residual block을 사용하게끔 설정되어 있으나 초기화시 입력하는 값을 통해 변경 가능합니다. 그리고 flatten에 관한 설정도 수행하지 않는게 기본 설정이지만 역시 변경 가능합니다. 
 
-    model = residual_CNN(input_size, kernal_list)
+    model = residual_CNN(input_channel, kernal_list)
     # 설정을 변경한 예
-    model = residual_CNN(input_size, kernal_list, Residual_Block_size = 'big', is_flatten = True)
+    model = residual_CNN(input_channel, kernal_list, Residual_Block_size = 'big', is_flatten = True)
     ~~~
+
+    ~~~python
+    # Dense CNN, DenseNet을 구성하는 Dense block으로 구성된 CNN
+    from CNN.dense_CNN import *
+
+    input_channel : 3
+    dense_block_first_channel = 32 # DenseNet은 다음 Dense block으로 넘어갈 때마다 채널의 크기를 2배씩 늘립니다. 그래서 맨처음 channel, 즉 kernal의 값만 받습니다.
+    dense_block_layer_list = [16, 32, 8] # 각 Dense block에서 쓰이는 residual block의 개수를 나타냅니다. 다시말해 len(dense_block_layer_list) = CNN이 사용하는 Dense block의 개수입니다.
+
+    model = dense_CNN(3, 32, [16, 32, 8])
+    # 설정을 변경한 예
+    model = dense_CNN(3, 32, [16, 32, 8], is_flatten = True) # 연산의 마지막에 flatten 연산을 수행할지 말시 설정할 수 있습니다. 
+    ~~~
+
