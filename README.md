@@ -9,18 +9,42 @@
 
 * util.py : 모델 학습에 사용되는 함수들을 모았습니다. 자세한 내용은 파일에 적혀있는 주석을 참고하시면 됩니다.
 
+## 구성(22.4.18 기준)
+📁 main <br>
+└📁Basic_model <br>
+⠀└normal_MLP.py <br>
+└📁Image_Classification <br>
+⠀└📁CNN <br>
+⠀⠀└normal_CNN.py <br>
+⠀⠀└dense_CNN.py <br>
+⠀⠀└residual_CNN.py <br>
+⠀└📁Linear <br>
+⠀⠀└MLP_Mixer.py <br>
+└📁util <br>
+⠀└util.py <br>
+
+### **<1> Basic model**
+가장 기본적인 MLP가 있습니다. 
+
 1. Linear : 선형 연산을 수행하는 nn.Linear 레이어를 가지고 구현했습니다. <br> 사용 예)
     ~~~python
-    from Linear.normal_MLP import *
+    from Basic_model.normal_MLP import *
 
     # 기본적으로 연산 도중에 사용하는 활성화 함수는 ReLU, 연산의 마지막에 사용하는 활성화 함수는 Sigmoid 함수로 설정했습니다. 그리고 Batch Normalization도 사용하게 설정했습니다. 이 설정들은 초기화 할 때 입력하는 값을 통해 개인적으로 변경하실 수 있습니다. 
     model = normal_MLP(input_size = 64, neural_list = [64, 64, 128, 128],  mid_activation_func = 'leaky_relu',  last_activateion_func = 'softmax', batch_normalization_use = False)
     ~~~
 
-2. CNN : Covolution 연산을 수행하는 네트워크입니다. <br> 사용 예)
+### **<2> Image Classification**
+이미지에 존재하는 객체의 클래스를 분류하는 일을 수행하는 네트워크를 구현했습니다. 
+
+#### **<2-1> CNN**
+CNN으로 구현한 네트워크들입니다. 
+
+1. normal_CNN : Covolution 연산을 수행하는 CNN 중 가장 기본적인 형태를 가진 네트워크입니다. <br> 
+   사용 예)
     ~~~python
     # 일반적인 CNN을 사용하는 경우
-    from CNN.normal_CNN import *
+    from Image_Classification.CNN.normal_CNN import *
 
     # input_channel : 입력하는 값의 채널. 3채널 이미지의 경우 3입니다. 
     # kernal_list : Convolutional layer들이 사용할 커널의 개수. p는 pooling을 나타냅니다. 
@@ -29,10 +53,10 @@
     # 기본적으로 연산 도중에 사용할 활성화 함수로 ReLU를 사용하고 연산의 마지막에 flatten 연산을 수행하지 않게 설정했습니다. 이 역시 초기화시 입력하는 값을 통해 수정할 수 있습니다. 그리고 Batch Normalization도 기본적으로 사용하게끔 설정되어 있으나 역시 수정 가능합니다. 
     model = normal_CNN(input_channel = input_channel, kernal_list = [64, 64, 'p', 128, 128], activation_func = 'leaky_relu',  is_flatten = True, batch_normalization_use = False)
     ~~~
-
+2. residual_CNN : Skip connection을 수행하는 CNN입니다. ResNet에서 제안한 residual block을 사용했습니다.
     ~~~python
     # Residual CNN, 그러니까 ResNet 계열의 CNN을 사용하는 경우
-    from CNN.residual_CNN import *
+    from Image_Classification.CNN.residual_CNN import *
 
     # input_channel : 입력하는 값의 채널. 3채널 이미지의 경우 3입니다. 
     # kernal_list : Convolutional layer들이 사용할 커널의 개수. residual_CNN은 커널이 변경될 때마다 pooling을 수행합니다.  
@@ -43,6 +67,7 @@
     model = residual_CNN(input_channel = 3, kernal_list = [64, 64, 128, 128], Residual_Block_size = 'big', is_flatten = True)
     ~~~
 
+3. dense_CNN : DenseNet에서 제안한 Dense block을 사용해 구성한 CNN입니다. 
     ~~~python
     # Dense CNN, DenseNet을 구성하는 Dense block으로 구성된 CNN
     from CNN.dense_CNN import *
@@ -54,7 +79,10 @@
     model = dense_CNN(input_channel = input_channel, dense_block_first_channel = 64, dense_block_layer_list = [16, 32, 8], is_flatten = True)
     ~~~
 
-3. MLP-Mixer : MLP만 가지고 이미지의 classification을 수행하는 모델입니다. 자세한 설명은 MLP.MLP_Mixer.py에 있습니다. <br> 사용 예)
+#### **<2-2> Linear**
+MLP로 구현한 네트워크입니다.
+
+1. MLP-Mixer : MLP만 가지고 이미지의 classification을 수행하는 모델입니다. 자세한 설명은 MLP.MLP_Mixer.py에 있습니다. <br> 사용 예)
     ~~~python
     from Linear.MLP_Mixer import *
 
