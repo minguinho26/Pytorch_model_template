@@ -7,6 +7,8 @@
 파이토치를 이용해 제작한 네트워크(MLP, CNN 등)들을 쉽게 사용하기 위해 제작하는 템플릿. <br>
 22.4.16 기준으로 3가지 유형(Linear, CNN, residual CNN)의 네트워크를 구현했습니다. 
 
+* util.py : 모델 학습에 사용되는 함수들을 모았습니다. 자세한 내용은 파일에 적혀있는 주석을 참고하시면 됩니다.
+
 1. Linear : 선형 연산을 수행하는 nn.Linear 레이어를 가지고 구현했습니다. <br> 사용 예)
     ~~~python
     from Linear.normal_MLP import *
