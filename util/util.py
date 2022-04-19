@@ -58,9 +58,6 @@ def train(model, EPOCH, loss_function, optimizer, train_dataset_loader, gradient
     train_loss_record = []
     train_acc_record = []
 
-    valid_loss_record = []
-    valid_acc_record = []
-
     for epoch in range(EPOCH):        
 
         model.train() # 모델을 학습 모드로 설정
