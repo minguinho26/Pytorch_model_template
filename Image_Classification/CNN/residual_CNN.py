@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchsummary import summary
@@ -65,15 +66,18 @@ class residual_block_big(nn.Module) :
 
 
 
-# input_channel : 입력받는 feature map의 채널
+# input_size : 입력되는 feature의 크기. 예를 들어 (3, 224, 224)
 # kernal_list : CNN 제작에 사용할 Convolutional layer의 커널 개수들. Residual Block을 제작할 때 i번 째 kernal을 입력 channel, i + 1번 째 kernal을 출력 channel로 설정한 Residual Block을 제작한다. 
-# is_flatten : 연산을 끝낸 feature map을 1차원 벡터로 만들지 말지 결정
+# num_classes : 분류할 클래스 개수
 # Residual_Block_size : Residual block을 Conv2d 2개로 구성된 small을 사용할건지 3개로 구성된 big을 사용할건지 결정. 만약 big, small 외의 문자열을 입력했으면 small을 사용하게끔 설정됨
 class small_Residual_CNN(nn.Module) :
-    def __init__(self, input_channel, kernal_list, Residual_Block_size = 'small', is_flatten = False) :
+    def __init__(self, input_size, kernal_list, num_classes, Residual_Block_size = 'small', device = 'cuda') :
         super(small_Residual_CNN, self).__init__()
 
-        self.residual_CNN = nn.Sequential(nn.Conv2d(input_channel, kernal_list[0], kernel_size=7, stride=2, padding=3, bias=False),
+        self.num_classes = num_classes
+        self.device = device
+
+        self.residual_CNN = nn.Sequential(nn.Conv2d(input_size[0], kernal_list[0], kernel_size=7, stride=2, padding=3, bias=False),
                                         nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
                                         )
         
@@ -89,9 +93,21 @@ class small_Residual_CNN(nn.Module) :
             else :
                 self.residual_CNN.add_module('ResBlock_' + str(i), self.set_residual_block(Residual_Block_size, kernal_list[i]))
 
-        # flatten 결정
-        if is_flatten == True : 
-            self.residual_CNN.add_module('Flatten', nn.Flatten())
+        self.residual_CNN.add_module('Flatten', nn.Flatten())
+        self.residual_CNN.to(self.device)
+
+        test_input = torch.unsqueeze(torch.ones(input_size), 0).to(self.device)
+        test_output = self.residual_CNN(test_input)
+        
+        self.header = nn.Sequential(
+                nn.Linear(test_output.size()[1], self.num_classes, bias = False),
+                nn.Softmax(dim=1)
+            ).to(self.device)
+
+        self.model = nn.Sequential(
+            self.residual_CNN,
+            self.header
+        )
     
     def set_residual_block(self, Residual_Block_size, kernal_size) :
         if Residual_Block_size.lower() == 'big' :
@@ -100,7 +116,7 @@ class small_Residual_CNN(nn.Module) :
             return residual_block_small(kernal_size)
 
     def forward(self, x) :
-        return self.residual_CNN(x)
+       return self.model(x)
     
     def model_summary(self, input_size_) :
-        return summary(self.residual_CNN, input_size=input_size_)
+        return summary(self.model, input_size=input_size_)

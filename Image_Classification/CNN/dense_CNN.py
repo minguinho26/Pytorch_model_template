@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchsummary import summary
@@ -64,15 +65,19 @@ class dense_block(nn.Module) :
         return output
 
             
-# input_channel : 입력받는 feature map의 채널.
+# input_size : 입력되는 feature의 크기. 예를 들어 (3, 224, 224)
 # dense_block_first_channel : 맨처음 dense block이 사용할 channel. 다음 dense block으로 넘어갈 때마다 채널 개수가 2배씩 증가함
 # dense_block_layer_list : 각 dense block에서 사용할 residual block의 개수. [6, 12, 24, 16] 등
-# is_flatten : 마지막에 flatten() 연산을 할 것인가?
+# num_classes : 분류할 클래스 개수
+# device : 네트워크를 가지고 연산할 장치를 선택
 class dense_CNN(nn.Module) :
-    def __init__(self, input_channel, dense_block_first_channel, dense_block_layer_list, is_flatten = False) :
+    def __init__(self, input_size, dense_block_first_channel, dense_block_layer_list, num_classes, device = 'cuda') :
         super(dense_CNN, self).__init__()
 
-        self.dense_CNN = nn.Sequential(nn.Conv2d(input_channel, dense_block_first_channel, kernel_size=7, stride=2, padding=3, bias=False),
+        self.num_classes = num_classes
+        self.device = device
+
+        self.dense_CNN = nn.Sequential(nn.Conv2d(input_size[0], dense_block_first_channel, kernel_size=7, stride=2, padding=3, bias=False),
                                         nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
                                         )
 
@@ -82,12 +87,25 @@ class dense_CNN(nn.Module) :
             # Dense Layer하고 1 x 1 conv로 채널수 조정 + avr pooling으로 이미지 크기 축소
             self.dense_CNN.add_module('translation layer_' + str(i), transition_layer(dense_block_channel))
         
-        if is_flatten == True :
-            self.dense_CNN.add_module('Flatten', nn.Flatten())
+        self.dense_CNN.add_module('Flatten', nn.Flatten())
+        self.dense_CNN.to(self.device)
+
+        test_input = torch.unsqueeze(torch.ones(input_size), 0).to(self.device)
+        test_output = self.dense_CNN(test_input)
+        
+        self.header = nn.Sequential(
+                nn.Linear(test_output.size()[1], self.num_classes, bias = False),
+                nn.Softmax(dim=1)
+            ).to(self.device)
+
+        self.model = nn.Sequential(
+            self.dense_CNN,
+            self.header
+        )
 
     def forward(self, x) :
-        return self.dense_CNN(x)
+        return self.model(x)
     
     def model_summary(self, input_size_) :
-        return summary(self.dense_CNN, input_size = input_size_)
+        return summary(self.model, input_size = input_size_)
         
