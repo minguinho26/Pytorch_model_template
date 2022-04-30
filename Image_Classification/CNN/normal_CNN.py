@@ -28,12 +28,12 @@ class normal_CNN(nn.Module) :
                 kernal_list[i] = kernal_list[i - 1] # [64, 'p', 128] -> [64, 64 ,128]로 만들어서 nn.Conv2d(kernal_list[i - 1], kernal_list[i]... 명령어를 수행할 때 에러가 나지 않게 만든다.
             else :
                 if i == 0 :
-                    self.CNN.add_module("Conv2d_" + str(i), nn.Conv2d(input_size[0], kernal_list[i], kernel_size=3, stride = 1, padding = 1, bias=False))
+                    self.CNN.add_module("Conv2d_" + str(i), nn.Conv2d(input_size[0], kernal_list[i], kernel_size=3, stride = 1, padding = 1))
                 else :
-                    self.CNN.add_module("Conv2d_" + str(i), nn.Conv2d(kernal_list[i - 1], kernal_list[i], kernel_size=3, stride = 1, padding = 1, bias=False))
+                    self.CNN.add_module("Conv2d_" + str(i), nn.Conv2d(kernal_list[i - 1], kernal_list[i], kernel_size=3, stride = 1, padding = 1))
                 # BN 사용 여부
                 if batch_normalization_use == True :
-                    self.CNN.add_module("BN_" + str(i), nn.BatchNorm2d(kernal_list[i], affine=False))
+                    self.CNN.add_module("BN_" + str(i), nn.BatchNorm2d(kernal_list[i]))
 
                 if i != len(kernal_list) - 1 :
                     if activation_func.lower() == 'relu' : 
@@ -44,22 +44,25 @@ class normal_CNN(nn.Module) :
         
         self.CNN.add_module('Flatten', nn.Flatten())
         self.CNN.to(self.device)
-      
+          
+        
+        self.CNN.eval()
+            
         test_input = torch.unsqueeze(torch.ones(input_size), 0).to(self.device)
+        
         test_output = self.CNN(test_input)
         
+        self.CNN.train()
+        
         self.header = nn.Sequential(
-                nn.Linear(test_output.size()[1], self.num_classes, bias = False),
+                nn.Linear(test_output.size()[1], self.num_classes),
                 nn.Softmax(dim=1)
             ).to(self.device)
-        
-        self.model = nn.Sequential(
-            self.CNN,
-            self.header
-        )
 
     def forward(self, x) :
-        return self.model(x)
+        output = self.CNN(x)
+        output = self.header(output)
+        return output
     
     def model_summary(self, input_size_) :
-        return summary(self.model, input_size=input_size_)
+        return summary(self, input_size=input_size_)

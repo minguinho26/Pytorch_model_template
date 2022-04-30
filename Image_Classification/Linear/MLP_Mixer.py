@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchsummary import summary
 
 class Per_patch_Fully_connected(nn.Module) :
     def __init__(self, input_size, patch_size, C) :
@@ -9,7 +10,7 @@ class Per_patch_Fully_connected(nn.Module) :
         # 이미지 넣기 전에 특정 규격으로 resize 해줄 필요가 있어보인다
         self.S = int((input_size[-2] * input_size[-1]) / (patch_size ** 2))
         self.x_dim_1_val = input_size[-3] * patch_size * patch_size
-        self.projection_layer = nn.Linear(input_size[-3] * patch_size * patch_size,  C, bias = False) # desired hidden dimension C로 embedding함
+        self.projection_layer = nn.Linear(input_size[-3] * patch_size * patch_size,  C) # desired hidden dimension C로 embedding함
         # projection_layer의 in_feature가 input_size[-3] * patch_size * patch_size인 이유 : 이미지의 channel * H * W를 S로 나누니까 [channel * patch size * patch size]가 나와서
 
     def forward(self, x) :
@@ -32,9 +33,9 @@ class token_mixing_MLP(nn.Module) :
 
         self.Layer_Norm = nn.LayerNorm(input_size[-2]) # C개의 값(columns)에 대해 각각 normalize 수행하므로 normalize되는 벡터의 크기는 S다. 
         self.MLP = nn.Sequential(
-            nn.Linear(input_size[-2], input_size[-2], bias = False),
+            nn.Linear(input_size[-2], input_size[-2]),
             nn.GELU(),
-            nn.Linear(input_size[-2], input_size[-2], bias = False)
+            nn.Linear(input_size[-2], input_size[-2])
         )
 
     def forward(self, x) :
@@ -58,9 +59,9 @@ class channel_mixing_MLP(nn.Module) :
         self.Layer_Norm = nn.LayerNorm(input_size[-1]) # S개의 벡터를 가지고 각각 normalize하니까 normalize되는 벡터의 크기는 C다
 
         self.MLP = nn.Sequential(
-            nn.Linear(input_size[-1], input_size[-1], bias = False),
+            nn.Linear(input_size[-1], input_size[-1]),
             nn.GELU(),
-            nn.Linear(input_size[-1], input_size[-1], bias = False)
+            nn.Linear(input_size[-1], input_size[-1])
         )
     
     def forward(self, x) :
@@ -68,6 +69,7 @@ class channel_mixing_MLP(nn.Module) :
         output = self.MLP(output)
 
         return output + x
+    
 
 # 앞서 구현한 token_mixing_MLP, channel_mixing_MLP을 합체
 # input_size : [Batch, S, C] 크기의 벡터
@@ -108,7 +110,7 @@ class MLP_Mixer(nn.Module) :
         self.global_average_Pooling_1 = nn.LayerNorm([S, C])
 
         self.head = nn.Sequential(
-            nn.Linear(S, classes_num, bias = False),
+            nn.Linear(S, classes_num),
             nn.Softmax(dim=1)
         )
 
@@ -122,11 +124,6 @@ class MLP_Mixer(nn.Module) :
         output = torch.mean(output, 2)
 
         return self.head(output)
-
-
-# 사용 예시============================================================================
-# image_size = (1, 3, 224, 224)
-# input = torch.ones(image_size)
-# mixer = MLP_Mixer(input_size=image_size, patch_size=32, C=512, N=8, classes_num=1000)
-# output = mixer(input)
-# 사용 예시============================================================================
+    
+    def model_summary(self, input_size_) :
+        return summary(self.mlp_mixer, input_size=input_size_)
