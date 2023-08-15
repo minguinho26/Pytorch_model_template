@@ -198,7 +198,7 @@ def get_cifar_dataset(classes_num = 10, batch_size = 512) :
                                               shuffle=True, num_workers=6,pin_memory=False,
                                                   drop_last=True)
     
-    test_dataloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+    test_dataloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                               shuffle=True, num_workers=6,pin_memory=False,
                                                   drop_last=True)
     
